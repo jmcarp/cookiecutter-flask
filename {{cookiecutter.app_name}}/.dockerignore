@@ -1,0 +1,2 @@
+node_modules/
+{{cookiecutter.app_name}}/static/

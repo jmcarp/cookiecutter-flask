@@ -1,0 +1,52 @@
+version: "2.1"
+volumes:
+  modules:
+  webpack:
+  static:
+services:
+  base:
+    build: .
+    environment:
+      FLASK_DEBUG: 1
+      FLASK_APP: autoapp.py
+      DATABASE_URL: postgresql://user:pass@db/data
+    volumes:
+    - .:/opt/app
+    - webpack:/opt/app/{{cookiecutter.app_name}}/webpack
+    - static:/opt/app/{{cookiecutter.app_name}}/static
+
+  app:
+    extends: base
+    command: flask run -h 0.0.0.0
+    environment:
+      PYTHONUNBUFFERED: 0
+    ports:
+    - 5000:5000
+    depends_on:
+    - db
+    - migrate
+    - webpack
+
+  webpack:
+    extends: base
+    command: npm run webpack-dev-server:docker
+    ports:
+    - 2992:2992
+    volumes:
+    - .:/opt/app
+    - modules:/opt/app/{{cookiecutter.app_name}}/modules
+    - webpack:/opt/app/{{cookiecutter.app_name}}/webpack
+    - static:/opt/app/{{cookiecutter.app_name}}/static
+
+  migrate:
+    extends: base
+    command: flask db upgrade
+    depends_on:
+    - db
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: data
